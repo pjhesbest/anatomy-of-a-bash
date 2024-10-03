@@ -256,8 +256,7 @@ for file in ${DIRECTORY}/*R1.fastq.gz; do
     COUNTER=$((COUNTER + 1)) # Increment the counter
 done
 ```
-
-You can even combin the loop with the if statement as follows:
+You can even combin the loop with the <code>if</code> statement broken down previously:
 
 ```{sh}
 COUNTER=0 # start the counter at zero
