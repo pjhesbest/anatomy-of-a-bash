@@ -4,13 +4,32 @@ Level: Advanced beginner-Intermediate | 2024-10-03
 ***
 ## Table of Contents
 
-
-
 ***
-## Introduction
-For a long time my bioinformatic analyses were very slow, as all my scripts were build specifically for a partiuclar sample or groups of samples. Paths were specific to a certain data/directories, definted variables were specific to the server I was using at the time, ect. This a completely acceptable way to process to opperate, but once you scale up and require routine analyses to be occuring is no longer helpful.
 
-Bear in mind, that BASH is not always the best language to do this (python is a good alternative), but if all you know is a little BASH and havent had the time to learn Python, or another laguage, this guide is to help you start writing some simple and multi-sample functioning scripts.
+## Introduction
+For a long time my bioinformatic analyses were very slow, as all my scripts were build specifically for a partiuclar sample or groups of samples. This is likely a consequence of the way most bioinfomatics courses and tutorials are taught, which is to have a single sample going through a process at one time. Once the quanntity of data I was processing at any single timepoint began to scale up, I was over-relying on loops to go parse through all my samples at each step. 
+
+Paths were specific to a certain data/directories, defined variables were specific to the server I was using at the time, ect. This can all fall apart when you move institute and your scripts all feel messy or useless at your new job/serve/computer.
+
+This a completely acceptable way to opperate, but once you scale up and require routine analyses to be occuring is no longer stres-free or reliable way to operate.
+
+Bear in mind, that BASH is not always the best language for achieving this (python is a good alternative), but if all you know is a little BASH and havent had the time to learn Python, or another laguage, this guide is to help you start writing some simple and multi-sample functioning scripts. 
+
+### Aims:
+
+The main aim of this guide is to show you way in which you can write BASH, R and Python scripts that: 
+1. Perform single/limited function(s) suitable for any appropriate data-type for that process
+2. Using data located in any part of the computer/server
+3. Producing outputs in a default or specified location/name
+4. Has useful help messages
+5. Produces usefull error mesages
+6. Can be submited to any server type (e.g. SunCluter, SLURM).
+
+The end goal is for you to work towards having a collection of scripts that can be run as follows:
+
+```{sh}
+
+```
 
 ***
 ## Anatomy of a BASH script
