@@ -198,12 +198,50 @@ This alows you to change the text color as follows:
 echo -e "${red}ERROR: something has gone very wrong because the text is red!${nocolor}"
 ```
 
-### The final script
-You can see an example of how this script broken down in the guide looks like all togther [here](URL to script), I have also added a few other script that operate in slightly different ways that you can take advanrage of.
+### The final script and more complex examples
+You can see an example of how this script broken down in the guide looks like all together at [bin/tb-profiler_v2.sh](URL). I have also added additional script to have a look through and get an idea of how else you can incorporate the features of bash to create increase the complexity/sofistication of the script.
+
+#### Adding a timestamp to the end of your script
+If your optimising your scripts and trying to get an idea of run-time and computing resources its useful to print out the run time. This is easily done by first creating a timestamp at the  start and the end of your script, the  calculating the elapsed time, then printing the time.
+
+```{sh}
+#!/usr/bin/env bash
+start_time=$(date +%s) # define start time
+
+#··············································#
+#··········· The rest of the script ···········#
+#··············································#
+
+finish_time=$(date +%s) # define end time
+
+# Calculate the difference in seconds
+elapsed_time=$((finish_time - start_time))
+
+# Convert elapsed time to hours, minutes, and seconds
+((sec=elapsed_time%60, elapsed_time/=60, min=elapsed_time%60, hrs=elapsed_time/60))
+timestamp=$(printf "Total time taken - %d hours, %d minutes, and %d seconds." $hrs $min $sec)
+echo $timestamp
+
+# Print the total runtime
+echo -e ""
+echo -e ""Total time taken: ${hrs}:${min}:${sec}"
+
+```
+
+If you are testing multing computing resource allocation and different processing time, you might even consider printing a running table of your experiment:
+
+```{sh}
+echo -e "script1;${THREADS};${NBOOTSTRAPS};${NUMSEQUENCES};${hrs}:${min}:${sec}" >> computing-time-test.csv
+```
 
 #### Not running the script if the output of the tool already exists:
 In the example [bin/tb-profiler_v1.sh](URL) you can see that there is an example to search a collated output from previous runs of this scrip before deciing to run the script or not. It uses an <code>if</code> statement to determine wether that particular sampleID exists the output, and if it does not (i.e. ) to run the script. But if the output does exists (i.e. ), the it skips that particuler sample.
 
+```{sh}
+
+```
+
+#### Forcing the script to run even if the output exists:
 In a more sophisticated version of the script [bin/tb-profiler_v2.sh](URL) there is an additional flag to force the script to overright the previous output (i.e. ) using a flag of <code>-F</code>.
 
 ```{sh}
@@ -234,7 +272,7 @@ In this example a tool called TB-Profiler is running on the R1 and R2 FASTQ file
 
 In all this might look something like this:
 
-```{}
+```{sh}
 COUNTER=1 # start the counter
 TOTAL=$(ls ${DIRECTORY}/*R1.fastq.gz | wc -l) # get the total
 
@@ -256,7 +294,8 @@ for file in ${DIRECTORY}/*R1.fastq.gz; do
     COUNTER=$((COUNTER + 1)) # Increment the counter
 done
 ```
-You can even combin the loop with the <code>if</code> statement broken down previously:
+
+You can even combine the loop with the <code>if</code> statement:
 
 ```{sh}
 COUNTER=0 # start the counter at zero
@@ -280,7 +319,6 @@ for file in ${DIRECTORY}/*R1.fastq.gz; do
     fi
 done
 ```
-
 
 ***
 ## Anatomy of a R script
