@@ -27,12 +27,6 @@ The main aim of this guide is to show you way in which you can write BASH, R and
 5. Produces usefull error mesages
 6. Can be submited to any server type (e.g. SunCluter, SLURM).
 
-The end goal is for you to work towards having a collection of scripts that can be run as follows:
-
-```{sh}
-
-```
-
 ***
 ## Anatomy of a BASH script
 
