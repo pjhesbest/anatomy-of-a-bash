@@ -186,9 +186,10 @@ A complete example might look something like this (if you are printing text to t
 echo -e "\033[31m ERROR: something has gone very wrong because the text is red!\033[m"
 ```
 
-This is quite a awkward to add and you can very easily miss a closure, and the the entirely of your console is colored red and you'll feel like you have made a terrible bloody mistake. A work around is to define the color at the start of your script:
+This is quite a awkward to add and you can very easily miss a closure, and the the entirely of your console is colored red and you'll feel like you have made a terrible bloody mistake. A work around is to define the colors as a variable at the start of your script:
 
 ```{sh}
+# Define colors
 green='\033[32m'; red='\033[31m'; cyan='\033[36m'; purple='\033[35m'; nocolor='\033[m'
 ```
 
@@ -196,6 +197,91 @@ This alows you to change the text color as follows:
 ```{sh}
 echo -e "${red}ERROR: something has gone very wrong because the text is red!${nocolor}"
 ```
+
+### The final script
+You can see an example of how this script broken down in the guide looks like all togther [here](URL to script), I have also added a few other script that operate in slightly different ways that you can take advanrage of.
+
+#### Not running the script if the output of the tool already exists:
+In the example [bin/tb-profiler_v1.sh](URL) you can see that there is an example to search a collated output from previous runs of this scrip before deciing to run the script or not. It uses an <code>if</code> statement to determine wether that particular sampleID exists the output, and if it does not (i.e. ) to run the script. But if the output does exists (i.e. ), the it skips that particuler sample.
+
+In a more sophisticated version of the script [bin/tb-profiler_v2.sh](URL) there is an additional flag to force the script to overright the previous output (i.e. ) using a flag of <code>-F</code>.
+
+```{sh}
+
+```
+
+#### Adding a counter if processing multiple samples
+If a single process is quick and not computationaly demanding, then loops are a good way to parse through lots of samples at once. I like to add a counter, so that I can keep track of where the script is at when I send it to a HPC.
+
+To add a counter, you first must set the counter at one: <code>COUNTER=1</code>, then you will want to get the total number of samples to be processed: <code>TOTAL=$(ls ${DIRECTORY}/*R1.fastq.gz | wc -l)</code>. With those now defined you can start the loop. In this example the loop is utilising the path <code>${DIRECTORY}</code> and searching for files containing the suffix <code>\*_R1.fastq.gz</code>. This is done to capture the sample ID by using <code>basename</code> to remove the path and suffic of the R1 file.
+```{}
+COUNTER=0
+TOTAL=$(ls ${DIRECTORY}/*R1.fastq.gz | wc -l); COUNTER=1
+for file in ${DIRECTORY}/*R1.fastq.gz; do
+···
+```
+With the loop open, we can calculate the remaining number of samples to process: <code>REMAINING=$((TOTAL - COUNTER))</code>. Its important to know that shell can only perform simple mathematics, so bear this in mind when using its calculator functions. Then an <code>echo -e</code> is used to report which sample number the loop is on, and how many are remaining: 
+
+```{sh}
+···
+echo -e "   Sample: ${ID}  [${COUNTER}/${TOTAL}; ${REMAINING} remaining]
+                R1: ${DIRECTORY}/${ID}_R1.fastq.gz
+                R2: ${DIRECTORY}/${ID}_R2.fastq.gz"
+···
+```
+
+In this example a tool called TB-Profiler is running on the R1 and R2 FASTQ files, utilising the <code>\${ID}</code> variable defined at the start of the loop for each sample. With the main function defined, we have to remember to increase the counter by 1, so that it increases with the loop to the next file: <code>COUNTER=$((COUNTER + 1))</code>. 
+
+In all this might look something like this:
+
+```{}
+COUNTER=1 # start the counter
+TOTAL=$(ls ${DIRECTORY}/*R1.fastq.gz | wc -l) # get the total
+
+for file in ${DIRECTORY}/*R1.fastq.gz; do
+    ID=$(basename "${file}" _R1.fastq.gz)
+    
+    REMAINING=$((TOTAL - COUNTER)) # Calculate remaining samples
+
+    # Display sample information with the counter
+    echo -e "   Sample: ${ID}  [${COUNTER}/${TOTAL}; ${REMAINING} remaining]
+                R1: ${DIRECTORY}/${ID}_R1.fastq.gz
+                R2: ${DIRECTORY}/${ID}_R2.fastq.gz"
+
+    # Run the profiling command
+    tb-profiler profile -1 ${DIRECTORY}/${ID}_R1.fastq.gz \
+                        -2 ${DIRECTORY}/${ID}_R2.fastq.gz \
+                        -t 4 -p ${ID} --txt
+        
+    COUNTER=$((COUNTER + 1)) # Increment the counter
+done
+```
+
+You can even combin the loop with the if statement as follows:
+
+```{sh}
+COUNTER=0 # start the counter at zero
+for file in ${DIRECTORY}/*R1.fastq.gz; do
+    ID=$(basename "${file}" _R1.fastq.gz)
+    # Calculate remaining samples
+    REMAINING=$((TOTAL - COUNTER))
+
+    # If argument to check that the TB_profile hasnt already been run:
+    if [[ ! -f ${TBPROF_DIR}/results/${ID}.results.txt ]]; then
+        # Display sample information with the counter
+        echo -e "${cyan}\tSample: ${ID}\t\t[$COUNTER/$TOTAL; $REMAINING remaining]\n\t\tR1: ${DIRECTORY}/${ID}_R1.fastq.gz\n\t\tR2: ${DIRECTORY}/${ID}_R2.fastq.gz"
+        echo -e "${nocolor}"
+        # Run the profiling command
+        tb-profiler profile -1 ${DIRECTORY}/${ID}_R1.fastq.gz -2 ${DIRECTORY}/${ID}_R2.fastq.gz -t ${NTHREADS} -p ${ID} --txt
+        # Increment the counter
+        COUNTER=$((COUNTER + 1))
+    elif [[ -f ${TBPROF_DIR}/results/${ID}.results.txt ]]; then
+        echo -e "${red}\t${TBPROF_DIR}/results/${ID}.results.txt exists, skipping: ${ID}\t\t[$COUNTER/$TOTAL; $REMAINING remaining]"
+        COUNTER=$((COUNTER + 1))
+    fi
+done
+```
+
 
 ***
 ## Anatomy of a R script
