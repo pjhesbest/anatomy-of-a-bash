@@ -1,32 +1,42 @@
-<!-- TOC -->
+# Anatomy of a BASH
+Level: Advanced beginner-Intermediate | 2024-10-03
 
-- [Introduction](#introduction)
-- [Anatomy of a BASH script](#anatomy-of-a-bash-script)
-    - [Defining arguments](#defining-arguments)
-    - [Defining default variables](#defining-default-variables)
-    - [Generating logs-files](#generating-logs-files)
-    - [Informative error messages](#informative-error-messages)
-    - [Making pretty script](#making-pretty-script)
-- [Anatomy of a R script](#anatomy-of-a-r-script)
-    - [Defining arguments](#defining-arguments)
-    - [Defining default variables](#defining-default-variables)
-- [Anatomy of a Python script](#anatomy-of-a-python-script)
-    - [Defining arguments](#defining-arguments)
-    - [Defining default variables](#defining-default-variables)
-    - [Generating logs-files](#generating-logs-files)
+***
+## Table of Contents
 
-<!-- /TOC -->
 
+
+***
 ## Introduction
-For a long time my bioinformatic analyses were very slow, as all my scripts were build specifically for a partiuclar sample. Paths were specific to a certain data/directories, definted variables were specific to the server I was using at the time, ect. This a completely acceptable way to process to opperate, but once you scale up and require routine analyses to be occuring is no longer helpful.
+For a long time my bioinformatic analyses were very slow, as all my scripts were build specifically for a partiuclar sample or groups of samples. Paths were specific to a certain data/directories, definted variables were specific to the server I was using at the time, ect. This a completely acceptable way to process to opperate, but once you scale up and require routine analyses to be occuring is no longer helpful.
 
-Bear in mind, that BASH is not always the best language to do this with (python is a good alternative) are all excellent alternatives, but if all you know is a little BASH and havent had the time to learn Python. 
+Bear in mind, that BASH is not always the best language to do this (python is a good alternative), but if all you know is a little BASH and havent had the time to learn Python, or another laguage, this guide is to help you start writing some simple and multi-sample functioning scripts.
 
-Sometime you want to write a script that can be run with an input and output flag, such as the example below.
+***
+## Anatomy of a BASH script
+
+### Defining arguments
+
+One way to achieve a multi-sample functioning script, very simply is to feed files into your script. The most basic way to do this in bash is to just add them to you line of code:
+
+```{sh}
+# write the script - assembly.sh
+echo -e "#!/usr/bin/env bash
+conda activate spades
+spades.py -1 ${1} -2 ${2} -o ${3}
+conda deactivate" > assembly.sh
+
+# running the script
+assembly.sh ${SAMPLE}_R1-fastq.gz ${SAMPLE}_R2-fastq.gz ${SAMPLE}_assembly-out
+```
+
+Your files are defined sequentially, so the first file following <code>assembly.sh</code> is \${1}, the second ${2}, so on. This is not the most usefriendly, if you are going to be sharing scripts for colleagues to use will be clunk for other to use. 
+
+This is why its valuable to write script that have help mesages and defined flags that you can run as follows:
 
 ```{sh}
 # BASH example
-assembly.sh -i ${SAMPLEID}_R1-fastq.gz -r ${SAMPLEID}_R1-fastq.gz -o ${SAMPLEID}
+assembly.sh -i ${SAMPLEID}_R1-fastq.gz -r ${SAMPLEID}_R2-fastq.gz -o ${SAMPLEID}
 
 # R example
 Rscript assembly-stats.R -i ${SAMPLEID}.assembly-stats.txt -o ${SAMPLEID}.assembly-summary.csv
@@ -34,12 +44,6 @@ Rscript assembly-stats.R -i ${SAMPLEID}.assembly-stats.txt -o ${SAMPLEID}.assemb
 # Python example
 python assembly-plotting.py -i ${SAMPLEID}.assembly-summary.csv -o ${SAMPLEID}.plot.png
 ```
-
-Achieving this is suprisingly simple, this will be covered bit by bit.
-***
-## Anatomy of a BASH script
-
-### Defining arguments
 
 First, we need to define the arguments for the script, and this is achieved using the <code>while getopts a\:b:c:h option; do</code>. Which looks worse than it actually is. This is utilising a <code>while</code> command to search for 
 
@@ -54,7 +58,6 @@ do
     esac
 done
 ```
-
 
 
 
