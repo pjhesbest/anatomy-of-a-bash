@@ -161,15 +161,17 @@ KAIJU=/path/to/kaiju/database/
 ### Informative error messages
 When thinking about your error messages, you want to be sure that whatever you are calling is important. Too many programmes have error messages that dont actually impact the workflow of the script.
 
-The easiest way to call an error message is to use an <code>if</code> statement, which is part of the <code>if</code>, <code>elif</code>, <code>else</code> statement  of commands that very helpful. These script basically ask 
+The easiest way to call an error message is to use an <code>if</code> statement, which is part of the <code>if</code>, <code>elif</code>, <code>else</code> statement  of commands that very helpful. These script basically ask
 
+### Version control
+An important thing to consider with your scripts, is always keep past versions of them, archiving
 
 ### Making a pretty script!
 In the long matrix stream of text that your can be printed to you console, it is often useful to have important text stand out. This could be a missing file, non-exixtent path, location of output file. 
 
 Adding color to you script can be definted very early. First you must indicate the color of the text needs to change using: <code>\033[</code>. This open up all subsequent text to a color change, BUT no color has been defined yet. To define a color your must add the approporiate ANSI escape codes (Table 1). For red text you would define it as: <code>\033[31m</code>. All text that follows this will be green. To revert the color back to default (typically white in a console), you need to close the escape code with a <code>\033[m</code>.
 
-<small>**Table 1.** ANSI color codes and their corresponding colors.</small>
+**Table 1.** ANSI color codes and their corresponding colors.
 
 | code | color  |
 |------|--------|
@@ -183,7 +185,7 @@ Adding color to you script can be definted very early. First you must indicate t
 A complete example might look something like this (if you are printing text to the console using the command <code>echo</code>, then you also have to add <code>-e</code> to enable interpretation of backslash escapes):
 
 ```{sh}
-echo -e "\033[31m ERROR: something has gone very wrong because the text is red!\033[m"
+echo -e "\033[31m ERROR: something has gone very wrong because the text is all red!\033[m"
 ```
 
 This is quite a awkward to add and you can very easily miss a closure, and the the entirely of your console is colored red and you'll feel like you have made a terrible bloody mistake. A work around is to define the colors as a variable at the start of your script:
@@ -195,7 +197,7 @@ green='\033[32m'; red='\033[31m'; cyan='\033[36m'; purple='\033[35m'; nocolor='\
 
 This alows you to change the text color as follows:
 ```{sh}
-echo -e "${red}ERROR: something has gone very wrong because the text is red!${nocolor}"
+echo -e "${red}ERROR: something has gone very wrong because the text is all red!${nocolor}"
 ```
 
 ### The final script and more complex examples
