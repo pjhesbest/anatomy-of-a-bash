@@ -275,7 +275,7 @@ A complete example might look something like this (if you are printing text to t
 echo -e "\033[31m ERROR: something has gone very wrong because the text is all red!\033[m"
 ```
 
-This is quite a awkward to add and you can very easily miss a closure, and the the entirely of your console is colored red and you'll feel like you have made a terrible bloody mistake. A work around is to define the colors as a variable at the start of your script:
+This is quite a awkward to add and you can very easily miss a closure, and the the entirely of your console is colored red and you'll feel like you have made a terrible bloody mistake. A work around is to define the colors as a variables at the start of your script:
 
 ```{sh}
 # Define colors
@@ -283,6 +283,7 @@ green='\033[32m'; red='\033[31m'; cyan='\033[36m'; purple='\033[35m'; nocolor='\
 ```
 
 This alows you to change the text color as follows:
+
 ```{sh}
 echo -e "${red}ERROR: something has gone very wrong because the text is all red!${nocolor}"
 ```
