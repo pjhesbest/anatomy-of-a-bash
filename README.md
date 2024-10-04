@@ -43,7 +43,23 @@ I like to think of scripts as often composed of three parts, a set-up, the main,
 This tutorial will mostly dicuss the setup of a script, as that is where you can refine your script to be modular. In the example blow you can see highlighted the what that setup might look like (Figure 2.). 
 
 ![image](figures/Figure2.png)
-<small>**Figure 2.** Example script that downloads from NCBI the assembly data for bacterial genomes and accepts a list of bacterial genome accession IDs to download either the nucleotides or proteins. Highlighted is the part of the script that will be mostly presented in this guide.</small>
+<small>**Figure 2.** Example script that downloads from NCBI the assembly data for bacterial genomes and accepts a list of bacterial genome accession IDs to download either the nucleotides or proteins. Highlighted is the part of the script that will be covered in this guide.</small>
+
+### Printing a help message
+
+A help message is just a chunk of text, and unlike in R and Python is actually detached from the argument definement (covered below). However, I prefere to have the help message before argument defining, as it helps remind exactly what I need. For this you simply define a function called Help() and open up the function with curly brakets <code>{*INSERT FUNCTION HERE*}</code>. The help message iself it just generated using <code>echo</code>. Then the help message can be called simply by using the new command <code>Help</code>, in your script.
+
+```{sh}
+Help(){
+    echo "Help message for the script: my script
+        Required:
+            -i      path to input file
+            -o      path to output file
+        Optional:
+            -t      number of threads (default : 4)
+            -h      print this help message and exit
+}
+```
 
 ### Defining arguments
 
@@ -51,7 +67,7 @@ One way to achieve a multi-sample functioning script, very simply is to feed fil
 
 ```{sh}
 # write the script - assembly.sh
-echo -e "#!/usr/bin/env bash
+echo "#!/usr/bin/env bash
 conda activate spades
 spades.py -1 ${1} -2 ${2} -o ${3}
 conda deactivate" > assembly.sh
@@ -60,94 +76,106 @@ conda deactivate" > assembly.sh
 assembly.sh ${SAMPLE}_R1-fastq.gz ${SAMPLE}_R2-fastq.gz ${SAMPLE}_assembly-out
 ```
 
-Your files are defined sequentially, so the first file following <code>assembly.sh</code> is \${1}, the second ${2}, so on. This is not the most usefriendly, if you are going to be sharing scripts for colleagues to use will be clunk for other to use. 
+Your files are defined sequentially, so the first file following <code>assembly.sh</code> is \${1}, the second ${2}, so on. This is not the most user-friendly, and if you are going to be sharing scripts with colleagues to use it will be clunky for others. 
 
 This is why its valuable to write script that have help mesages and defined flags that you can run as follows:
 
 ```{sh}
-# BASH example
 assembly.sh -i ${SAMPLEID}_R1-fastq.gz -r ${SAMPLEID}_R2-fastq.gz -o ${SAMPLEID}
-
-# R example
-Rscript assembly-stats.R -i ${SAMPLEID}.assembly-stats.txt -o ${SAMPLEID}.assembly-summary.csv
-
-# Python example
-python assembly-plotting.py -i ${SAMPLEID}.assembly-summary.csv -o ${SAMPLEID}.plot.png
 ```
 
-First, we need to define the arguments for the script, and this is achieved using the <code>while getopts a\:b:c:h option; do</code>. Which looks worse than it actually is. This is utilising a <code>while</code> command to search for 
+First, we need to define the arguments for the script, and this is achieved using the <code>while getopts a\:b:c:h option; do</code>. Which looks worse than it actually is. This is utilising a <code>while</code> statement to search for input flags, before here as <code>i\:o:t:h</code>, which just means it will search for <code>-i</code>, <code>-o</code>, <code>-t</code>, and <code>-h</code>. Next those flags are defined into variables. For the input flag it is defined as such: <code>i)input=${OPTARG};;</code>. 
+
+Now for the rest of the script, whenever you call the variable <code>${input}</code>, the script will utilised whatever file was provided when the script was run (e.g. <code>-i path/to/contigs.fasta</code>). This is done for all the flags you need for your script to operate as intended while providing flexibility.
 
 ```{sh}
-while getopts i:o:t:h option
+while getopts i:o:t:B:h option
 do 
     case "${option}" in 
         i)input=${OPTARG};;
         o)output=${OPTARG};;
         t)threads=${OPTARG};;
+        B)bandage=false;;
         h)Help; exit;;
     esac
 done
 ```
 
+You can change this to have as many or as few flags are you want. It is important to ensure that your help message (encoded in the function <code>Help</code> as described above), is as written. So if your defined your help message as <code>help</code> or <code>Help_message</code>, that is what you need to place at <code>h)Help; exit;;</code>. When the hep message the run (e.g. <code>myscript.sh -h</code>), the script will terminate immediately after printing the help message, you acheive this by having <code>exit;;</code>. 
 
+A final feature you can take advatage of is utilising a <code>true</code>/<code>false</code> statement in the argument definement (e.g <code>B)bandage=false;;</code>). Say for example you have an assembler - such SPAdes - that will produce a optional output that you sometimes want it to generate, like a bandage plot. You can add a flag <code>-B</code> when you want SPAdes to generate the bandage output, or omit it in order to resort to the default, which in the example is false (to not perform). If you do this you will later have to include an <code>if</code> statement in order to enact this in both a <code>true</code> and <code>false</code> scenario (this will be covered later).
+
+### Producing error messages 
+
+When you begin incorporating flags, its important that you set up some error messages to help people troubleshoot why the script might not be working for them. As by default, the error messages produced by BASH might not be the most informative to someone unfamiliar with the language.
+
+Recall in the help message there where two types of input flags, required and optional. Lets go about creating error messages based on those two categories, starting with the required arguemnts. In a scenario where a user did not define a required argument, we need to inform them what they have missed. We will do this with <code>if</code> statements.
 
 ```{sh}
-#!/usr/bin/env bash
-set -euxo pipefail             # (1) pipefail flag
+if [[ -z ${inpput} ]]; then echo -e "ERROR: -i, input is missing"; Help, exit 1; fi
+```
+The logic of this <code>if</code>  statement, is in the sitaution where <code>-i</code> is not defined, utilising the the <code>-z</code> string, which means that the if statement is true if the string is empty (i.e. <code>\${input}</code> does not exist/is empty because <code>-i</code> was not provided), then the following action is performed. That action is to print a message, then call the Help function, which will print the help message to remind the user what the function of the script are, then close the script with exit 1. If the statemet is not true (i.e <code>\${input}</code> is not empty), the the <code>if</code> statement ends (<code>fi</code>, for finish), and the script continues. There are additional features to if statements that will be covered later, but they are very powerful tools to utilise in your script.
 
-################################################################################
+For optional argument, we don't need to colapse the script if not file or value was provide when the scrip was run, instead it can be set to a default. In the help message, we stated that the default number of threads was 4. So we set it as such using another <code>if</code> statement. 
 
-# Help message                 # (2) to collect all the input arguments and the help message
-Help()
-{
-echo -e "YOUR HELP MESSAGE"
-echo -e "Required flags:"
-echo -e "   -a  The A thing"
-echo -e "   -b  The B thing"
-echo -e "Optional flags:"
-echo -e "   -c  The C thing (default : -c 2)"
-echo -e "   -h  Print this help message and exit."
-echo -e "Example:"
-echo -e "e.g. bash myscript.sh -a /path/to/A.thing -b "The B thing" -c 5 "
-}
+```{sh}
+if [[ -z "${threads}" ]]; then threads=4; fi
+```
 
-# Define flags/arguments/parameters
-#   let me know if this confuses you
-while getopts a:b:c:h option
-do 
-    case "${option}" in 
-        a)A=${OPTARG};;
-        b)B=${OPTARG};;
-        c)C=${OPTARG};;
-        h)Help; exit;;
-    esac
-done
+The same logic as before is applied, except this time we set the threads variable to the default value before ending the <code>if</code> statement (<code>threads=4; fi</code>). Now in the script, unless a <code>-t</code> value was given, whenever <code>${threads}</code> is called the default value will be used. You can even add more to this statement, to include a message to inform the user that the default value has been applied. Have a go and write the following if statements:
 
-################################################################################
+1. To the optional <code>-t</code> flag, add a message that the number of threads is the default value.
+2. The error message for the scenario where -o has not been provided
+3. Make the <code>-o</code> an optional flag and default the output directory to the current working directory
 
-# Check argument flags              # (3) IF argument to check script can proceed
-## REQUIRED arguments
-if [[ -z "${A}" || -z "${B}" ]];            # incase both -a and -b are missed
-        then echo -e "ERROR: -a and -b are missing"; Help, exit 1; 
-    elif [[ -z "${A}" ]]; then              # only -a is missed
-        echo -e "ERROR: -a is missing"; Help, exit 1; 
-    elif [[ -z "${B}" ]]; then              # only -b is missed
-        echo -e "ERROR: -b is missing"; Help, exit 1; 
-fi
+<details>
+  <summary>Reveal solution to 1</summary>
+Since <code>${threads}</code> has a value, it is useful to use the variable instead of a hard number, as at some point in the future you might change the value of the default, and you want to have a script where you need to change that value in as few places as possible. In the present example, you would only have to change that value in two places: the <code>if</code> statement and the <code>Help</code> message. 
 
-## OPTIONAL arguments
-if [[ -z "${C}" ]]; then C=2; fi      # if -c is not defined, then make C the default value
+  ```{sh}
+  if [[ -z "${threads}" ]]; then 
+    threads=4; 
+    echo "-t not specified, utilising the default value ${threads}; fi
+  ```
 
-################################################################################
+</details>
 
-# Logfile generation                   # (4) Print a .log file of the outputs of the script
+<details>
+  <summary>Reveal solution to 2</summary>
+Simply need to add a echo to the if statement. This can be personalised hower you want as long as it is informative to the user.
+
+  ```{sh}
+  if [[ -z ${output} ]]; then echo -e "ERROR: -o, output is missing"; Help, exit 1; fi
+  ```
+
+</details>
+
+<details>
+  <summary>Reveal solution to 3</summary>
+To define the output as the working directory you will need to use the function <code>$(pwd)</code>, which print the full path to the curren working directory. That is how we define the output.
+
+  ```{sh}
+  if [[ -z ${output} ]]; then 
+    echo -e "ERROR: -o, output is missing"
+    output=$(pwd); fi
+  ```
+
+
+</details>
+
+### Generating logs-files
+
+Log files are invaluable for troubleshooting your scripts, or having a record of every run of your script (think of them as a labbook entry). You might not always keep all logs, but they are useful for looking back and remining yourself of what parameters the script was run using.
+
+```{sh}
 logstamp=$(date '+%Y%m%d%H%M%S') # Define the log file with the timestamp in its name
 logfile="my-script_${logstamp}.log" # Redirect both stdout and stderr to the log file
 exec > >(tee -a "${logfile}") 2>&1
+```
 
-################################################################################
 
-# Set up environment                # (5) Working enviornment set up
+```{sh}
+# Set up environment
 eval "$(conda shell.bash hook)"
 
 WD=${A}; cd ${WD}       # lets say in this example, the flag -a defines the path to the 
@@ -163,9 +191,6 @@ KAIJU=/path/to/kaiju/database/
 ```
 
 
-### Defining default variables
-
-### Generating logs-files
 
 ### Informative error messages
 When thinking about your error messages, you want to be sure that whatever you are calling is important. Too many programmes have error messages that dont actually impact the workflow of the script.
