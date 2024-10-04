@@ -75,30 +75,28 @@ Help # to print the help message
 
 ### Defining arguments
 
-One way to achieve a multi-sample functioning script, very simply is to feed files into your script. The most basic way to do this in BASH is to just add them to the end of you line of code:
+One way to achieve a multi-sample functioning script very simply is to feed files into your script, rather than have the target file/values defined in the script. The most basic way to do this in BASH is to just add them to the end of you line of code:
 
 ```{sh}
-# write the script - assembly.sh
+# write the example script
 echo "#!/usr/bin/env bash
-conda activate spades
-spades.py -1 ${1} -2 ${2} -o ${3}
-conda deactivate" > assembly.sh
+      eval "$(conda shell.bash hook)"
+      conda activate spades
+      spades.py -1 ${1} -2 ${2} -o ${3}
+      conda deactivate
+" > assembly.sh
 
-# running the script
-assembly.sh ${SAMPLE}_R1-fastq.gz ${SAMPLE}_R2-fastq.gz ${SAMPLE}_assembly-out
+# This script could be run as follows
+assembly.sh sample-1_R1.fastq.gz sample-1_R2.fastq.gz sample-1_assembly-out
 ```
 
-Your files are defined sequentially, so the first file following <code>assembly.sh</code> is \${1}, the second ${2}, so on. This is not the most user-friendly, and if you are going to be sharing scripts with colleagues to use it will be clunky for others. 
-
-This is why its valuable to write script that have help mesages and defined flags that you can run as follows:
+Your inputs are defined sequentially, so the first file/value following <code>assembly.sh</code> becomes the variable <code>\${1}</code>, the second <code>\${2}</code>, so on. This is not the most user-friendly, and if you are going to be sharing scripts with colleagues it can be clunky for others. This is why its valuable to write script that have help mesages and defined flags. Using the same example as above, but this time there is a input flag for the required files (R1 and R2 reads), and an output directory:
 
 ```{sh}
-assembly.sh -i ${SAMPLEID}_R1-fastq.gz -r ${SAMPLEID}_R2-fastq.gz -o ${SAMPLEID}
+assembly.sh -i sample-1_R1.fastq.gz -r sample-2_R1.fastq.gz -o sample-1_assembly-out
 ```
 
-First, we need to define the arguments for the script, and this is achieved using the <code>while getopts a\:b:c:h option; do</code>. Which looks worse than it actually is. This is utilising a <code>while</code> statement to search for input flags, before here as <code>i\:o:t:h</code>, which just means it will search for <code>-i</code>, <code>-o</code>, <code>-t</code>, and <code>-h</code>. Next those flags are defined into variables. For the input flag it is defined as such: <code>i)input=${OPTARG};;</code>. 
-
-Now for the rest of the script, whenever you call the variable <code>${input}</code>, the script will utilised whatever file was provided when the script was run (e.g. <code>-i path/to/contigs.fasta</code>). This is done for all the flags you need for your script to operate as intended while providing flexibility.
+First, we need to define the arguments for the script, and this is achieved using the <code>while getopts a\:b:c:h option; do</code>. Which looks scarier than it actually is. This is utilising a <code>while</code> statement to search for input flags, before here as <code>i\:o:t:h</code>, which just means it will search for <code>-i</code>, <code>-o</code>, <code>-t</code>, and <code>-h</code>. Next those flags are defined into variables, for example the input flag it is defined as such: <code>i)input=${OPTARG};;</code>.
 
 ```{sh}
 while getopts i:o:t:B:h option
@@ -113,31 +111,35 @@ do
 done
 ```
 
-You can change this to have as many or as few flags are you want. It is important to ensure that your help message (encoded in the function <code>Help</code> as described above), is as written. So if your defined your help message as <code>help</code> or <code>Help_message</code>, that is what you need to place at <code>h)Help; exit;;</code>. When the hep message the run (e.g. <code>myscript.sh -h</code>), the script will terminate immediately after printing the help message, you acheive this by having <code>exit;;</code>. 
+Now for the rest of the script, whenever you call the variable <code>${input}</code>, the script will utilised whatever file/value was provided when the script was run (e.g. <code>-i path/to/contigs.fasta</code>). This is done for all the flags you need for your script to operate as intended while providing flexibility. The input doesnt need to be file paths, it can be values, chunks of text.
 
-A final feature you can take advatage of is utilising a <code>true</code>/<code>false</code> statement in the argument definement (e.g <code>B)bandage=false;;</code>). Say for example you have an assembler - such SPAdes - that will produce a optional output that you sometimes want it to generate, like a bandage plot. You can add a flag <code>-B</code> when you want SPAdes to generate the bandage output, or omit it in order to resort to the default, which in the example is false (to not perform). If you do this you will later have to include an <code>if</code> statement in order to enact this in both a <code>true</code> and <code>false</code> scenario (this will be covered later).
+You can change this to have as many or as few arguments as you want. It is important to ensure that your help message (encoded in the function <code>Help</code> as described above), is as written to reflect the contents of the <code>while</code> argument. When the help message is called (e.g. <code>assembly.sh -h</code>), the script will terminate immediately after printing the help message, you acheive this by having the default bash function <code>exit</code> in <code>h)Help; exit;;</code>. 
+
+A final feature you can take advatage of is utilising a <code>true</code>/<code>false</code> statement in the argument definement (e.g <code>B)bandage=false;;</code>). Say for example you have an assembler - such SPAdes - that will produce a optional output that you sometimes want it to generate, like a bandage plot. You can add a flag <code>-B</code> when you want SPAdes to generate the bandage output, or omit it in order to resort to the default, which in the example is false (i.e. to not perform). If you do this, you will later have to include an <code>if</code> statement in order to enact this in both a <code>true</code> and <code>false</code> scenario (this will be covered later).
 
 ### Producing error messages 
 
 When you begin incorporating flags, its important that you set up some error messages to help people troubleshoot why the script might not be working for them. As by default, the error messages produced by BASH might not be the most informative to someone unfamiliar with the language.
 
-Recall in the help message there where two types of input flags, required and optional. Lets go about creating error messages based on those two categories, starting with the required arguemnts. In a scenario where a user did not define a required argument, we need to inform them what they have missed. We will do this with <code>if</code> statements.
+Recall in the help message there where two types of input flags, required and optional. Lets go about creating error messages based on those two categories, starting with the required arguemnts. In a scenario where a user did not define a required arguments, we need to inform users what they have missed. We will do this with <code>if</code> statements.
 
 ```{sh}
 if [[ -z ${inpput} ]]; then echo -e "ERROR: -i, input is missing"; Help, exit 1; fi
 ```
-The logic of this <code>if</code>  statement, is in the sitaution where <code>-i</code> is not defined, utilising the the <code>-z</code> string, which means that the if statement is true if the string is empty (i.e. <code>\${input}</code> does not exist/is empty because <code>-i</code> was not provided), then the following action is performed. That action is to print a message, then call the Help function, which will print the help message to remind the user what the function of the script are, then close the script with exit 1. If the statemet is not true (i.e <code>\${input}</code> is not empty), the the <code>if</code> statement ends (<code>fi</code>, for finish), and the script continues. There are additional features to if statements that will be covered later, but they are very powerful tools to utilise in your script.
+The logic of this <code>if</code>  statement, is in the situation where <code>-i</code> is not defined - the <code>-z</code> string - which means that the if statement is true if the string is empty (i.e. human language: <code>\${input}</code> does not exist/is empty because <code>-i</code> was not provided), then the following action is performed. That action is to print a message (<code>"ERROR: -i, input is missing"</code>), then call the <code>Help</code> function, which will print the help message to remind the user what the flags of the script are, then close the script with exit 1. If the statemet is not true (i.e human language: <code>\${input}</code> is not empty, before a input was provided), the <code>if</code> statement ends (<code>fi</code>, for finish), and the script continues. There are additional features to <code>if</code> statements that will be covered later, but they are very powerful tools to utilise in your script.
 
-For optional argument, we don't need to colapse the script if not file or value was provide when the scrip was run, instead it can be set to a default. In the help message, we stated that the default number of threads was 4. So we set it as such using another <code>if</code> statement. 
+For optional argument, we don't need to colapse the script if no file or value was provide when the scrip was run, instead default value/path can be utilised. In the help message, we stated that the default number of threads was 4. So we set it as such using another <code>if</code> statement. 
 
 ```{sh}
 if [[ -z "${threads}" ]]; then threads=4; fi
 ```
 
-The same logic as before is applied, except this time we set the threads variable to the default value before ending the <code>if</code> statement (<code>threads=4; fi</code>). Now in the script, unless a <code>-t</code> value was given, whenever <code>${threads}</code> is called the default value will be used. You can even add more to this statement, to include a message to inform the user that the default value has been applied. Have a go and write the following if statements:
+The same logic as before is applied, except this time we set the threads variable to the default value before ending the <code>if</code> statement (<code>threads=4; fi</code>). Now in the script, unless a <code>-t</code> value was given, whenever <code>${threads}</code> is called the default value will be used. You can even add more to this statement, to include a message to inform the user that the default value has been applied. 
 
-1. To the optional <code>-t</code> flag, add a message that the number of threads is the default value.
-2. The error message for the scenario where -o has not been provided
+Have a go and write the following if statements:
+
+1. For the optional <code>-t</code> flag, add a message that the number of threads is the default value.
+2. An error message for the scenario where <code>-o</code> has not been provided
 3. Make the <code>-o</code> an optional flag and default the output directory to the current working directory
 
 <details>
@@ -147,14 +149,14 @@ Since <code>${threads}</code> has a value, it is useful to use the variable inst
   ```{sh}
   if [[ -z "${threads}" ]]; then 
     threads=4; 
-    echo "-t not specified, utilising the default value ${threads}; fi
+    echo "Number of threads not specified, utilising default value ${threads}; fi
   ```
 
 </details>
 
 <details>
   <summary>Reveal solution to 2</summary>
-Simply need to add a echo to the if statement. This can be personalised hower you want as long as it is informative to the user.
+Simply need to add a echo to the <code>if</code> statement. This can be personalised hower you want as long as it is informative to the user.
 
   ```{sh}
   if [[ -z ${output} ]]; then echo -e "ERROR: -o, output is missing"; Help, exit 1; fi
@@ -164,12 +166,12 @@ Simply need to add a echo to the if statement. This can be personalised hower yo
 
 <details>
   <summary>Reveal solution to 3</summary>
-To define the output as the working directory you will need to use the function <code>$(pwd)</code>, which print the full path to the curren working directory. That is how we define the output.
+To define the output as the working directory you will need to use the function <code>$(pwd)</code>, which print the full path to the curren working directory. That is how we define the output. Same as in (1), we will use the variable <code>${output}</code> to report the output path.
 
   ```{sh}
   if [[ -z ${output} ]]; then 
-    echo -e "ERROR: -o, output is missing"
     output=$(pwd); fi
+    echo -e "Output path is missing, defaulting to current directory: ${output}"
   ```
 
 
@@ -177,14 +179,31 @@ To define the output as the working directory you will need to use the function 
 
 ### Generating logs-files
 
-Log files are invaluable for troubleshooting your scripts, or having a record of every run of your script (think of them as a labbook entry). You might not always keep all logs, but they are useful for looking back and remining yourself of what parameters the script was run using.
+Log files are invaluable for troubleshooting your scripts, or having a record of every run of your script (think of them as a lab book entry). You might not always keep all logs, but they are useful for looking back and remining yourself of what parameters the script was run using.
+
+First we want to create an accrate time-point in the format of YYYYMMDDHHMMSS, this might seem excessive, but considering you could be running this script multiple time making small adjustments, you want each logfile to be completely unique to not overwrite them. To achieve that we create a variable that contains the log file name. First create a variable called <code>${logfile}</code>, we use the default BASH function <code>date</code>, and specifiy the date format <code>'+%Y%m%d%H%M%S'</code>. We then add the suffix <code>.log</code> to the file name.
 
 ```{sh}
-logstamp=$(date '+%Y%m%d%H%M%S') # Define the log file with the timestamp in its name
-logfile="my-script_${logstamp}.log" # Redirect both stdout and stderr to the log file
-exec > >(tee -a "${logfile}") 2>&1
+logfile="$(date '+%Y%m%d%H%M%S')".log
 ```
 
+Now with the logfile name defined as a variable (<code>${logfile}</code>), we redirect both standard output (<code>stdout</code>) and standard error (<code>stderr</code>) to a log file, while also displaying them on the terminal at the same time. Let's break it down step by step:
+
+```{sh}
+exec > >( tee -a "${logfile}" ) 2>&1
+```
+
+- <code>exec</code> changes the behavior of stdout and stderr for the rest of the script, 
+- <code>stdout</code> (<code>></code>) is redirected into a process substitution: <code>>( tee -a "${logfile}" ) </code>. This sends the output to the <code>tee</code> command. 
+- <code>tee</code> displays the output on the terminal (as usual) and appends it to the file <code>${logfile}</code>. 
+- <code>2>&1</code> redirects stderr to the same destination as stdout, meaning that errors are also both displayed on the terminal and written to the log file.
+
+```{sh}
+logfile="$(date '+%Y%m%d%H%M%S')".log
+exec > >( tee -a "${logfile}" ) 2>&1
+```
+
+With that you will generate a output containing the standard outputs and the standard errors, which is great for troubleshooting your code. If you are routinely sending scripts to a HPC, the submission manager of that HPC more than likely generates log files, so you might not actually need this unless you want to hoard log files. 
 
 ```{sh}
 # Set up environment
@@ -202,20 +221,42 @@ KAIJU=/path/to/kaiju/database/
 ################################################################################
 ```
 
+### Environment setup
 
+Now that much of your script is defined for function, you can begin setting up the working environment to utilise your desired function. This might include defining paths to databases, or opening a conda enviroment. This is a very personalised process for your script and I wont cover mush, but will make a note about conda.
 
-### Informative error messages
-When thinking about your error messages, you want to be sure that whatever you are calling is important. Too many programmes have error messages that dont actually impact the workflow of the script.
+#### 1. Conda
+When running conda in a HPC, you often have to configure your shell environment for conda. This command is typically required to properly initialize conda within a shell session, especially if the conda base environment isn't automatically loaded by default (e.g., when you don't have conda in your PATH at shell startup). So if you are struggling to get conda working in your HPC, this might be why.
 
-The easiest way to call an error message is to use an <code>if</code> statement, which is part of the <code>if</code>, <code>elif</code>, <code>else</code> statement  of commands that very helpful. These script basically ask
+```{sh}
+eval "$(conda shell.bash hook)"
+conda activate assembly-env
+```
+#### 2. Printing flag parameters
+If you are going to be generating a log-file for a record of your analysis/data processing, I find it useful to print you very close to the start of the string a list of all the variables utilise in the flags, data paths, data-files used, ect. This might look like this
 
-### Version control
-An important thing to consider with your scripts, is always keep past versions of them, archiving
+```{sh}
+echo "Running assembly.sh with the following parameters
+SampleID: "${sample}"
+R1: "${forward}"
+R2: "${reverse}"
+Minimum read length: ${min_rlen}
+Minimum contig length: ${min_clen}
+"
+```
+
+Alternatively you could opt to print this out as a .csv file containing your run parameters. 
+Personalising your scripts is very simple, and can be easily modified to meet your experimental needs. 
+
+```{sh}
+echo "${logfile};${forward}:${reverse};${min_rlen};${min_clen}" >> assembly.params.log
+```
+
 
 ### Making a pretty script!
-In the long matrix stream of text that your can be printed to you console, it is often useful to have important text stand out. This could be a missing file, non-exixtent path, location of output file. 
+In the long matrix stream of text that can be printed to you terminal, it is often useful to have important text stand out. This could be a missing file, non-existent paths, location of output file...
 
-Adding color to you script can be definted very early. First you must indicate the color of the text needs to change using: <code>\033[</code>. This open up all subsequent text to a color change, BUT no color has been defined yet. To define a color your must add the approporiate ANSI escape codes (Table 1). For red text you would define it as: <code>\033[31m</code>. All text that follows this will be green. To revert the color back to default (typically white in a console), you need to close the escape code with a <code>\033[m</code>.
+Adding color to you script can be definted very easily. First you must indicate the color of the text needs to change using: <code>\033[</code>. This open up all subsequent text to a color change, BUT no color has been defined yet. To define a color your must add the approporiate ANSI escape codes (Table 1). For red text you would define it as: <code>\033[31m</code>. All text that follows this will be green. To revert the color back to default (typically white in a console), you need to close the escape code with a <code>\033[m</code>.
 
 **Table 1.** ANSI color codes and their corresponding colors.
 
@@ -300,7 +341,8 @@ In a more sophisticated version of the script [bin/tb-profiler_v2.sh](URL) there
 If a single process is quick and not computationaly demanding, then loops are a good way to parse through lots of samples at once. I like to add a counter, so that I can keep track of where the script is at when I send it to a HPC.
 
 To add a counter, you first must set the counter at one: <code>COUNTER=1</code>, then you will want to get the total number of samples to be processed: <code>TOTAL=$(ls ${DIRECTORY}/*R1.fastq.gz | wc -l)</code>. With those now defined you can start the loop. In this example the loop is utilising the path <code>${DIRECTORY}</code> and searching for files containing the suffix <code>\*_R1.fastq.gz</code>. This is done to capture the sample ID by using <code>basename</code> to remove the path and suffic of the R1 file.
-```{}
+
+```{sh}
 COUNTER=0
 TOTAL=$(ls ${DIRECTORY}/*R1.fastq.gz | wc -l); COUNTER=1
 for file in ${DIRECTORY}/*R1.fastq.gz; do
