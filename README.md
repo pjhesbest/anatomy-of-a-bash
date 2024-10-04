@@ -43,11 +43,11 @@ I like to think of scripts as often composed of three parts, a set-up, the main,
 This tutorial will mostly dicuss the setup of a script, as that is where you can refine your script to be modular. In the example blow you can see highlighted the what that setup might look like (Figure 2.). 
 
 ![image](figures/Figure2.png)
-<small>**Figure 2.** Example script that downloads from NCBI the assembly data for bacterial genomes and accepts a list of bacterial genome accession IDs to download either the nucleotides or proteins.</small>
+<small>**Figure 2.** Example script that downloads from NCBI the assembly data for bacterial genomes and accepts a list of bacterial genome accession IDs to download either the nucleotides or proteins. Highlighted is the part of the script that will be mostly presented in this guide.</small>
 
 ### Defining arguments
 
-One way to achieve a multi-sample functioning script, very simply is to feed files into your script. The most basic way to do this in bash is to just add them to you line of code:
+One way to achieve a multi-sample functioning script, very simply is to feed files into your script. The most basic way to do this in BASH is to just add them to the end of you line of code:
 
 ```{sh}
 # write the script - assembly.sh
