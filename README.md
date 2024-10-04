@@ -30,14 +30,13 @@ The main aim of this guide is to show you way in which you can write BASH, R and
 ***
 ## Anatomy of a BASH script
 
-I like to think of scripts as often composed of three parts, a set-up, the main, and the closing.
-The set up for the script will include things such as defining argument flags, parameters, opening virtual environments (if needed), help function, setting up a log output. The main will compose of the primary purpose of the scripts, to run a specific or series of programmes, and the closing of the script will include anything got wrap it all up. 
-
 Since most of my script are sent to a computing cluter, they must be send in the form of a BASH script (some servers do accept python scripts, though I have had a problem in the past with activing conda). For simple local operations, such as using <code>seqkit</code> to check the number of reads of a FASTQ/A file, I use them as is, but when I want to perform an assembly and QC the contics, I would write a simple script that I can send to a cluster.
 
 I find it is helpful to approach script writing with modularity at the forefront (Figure 1). I like to breakdown all the primary functions I need for specific tools with lots of inputs and outputs, and how can I make it such that data from any project can be fed into it, and the outputs can be utilised by the next programme contained within another script. When you take this moduler approach, you are able to wrap all your individual scripts using a wrapped (i.e NextFlow, Snakemake) to build more complete pipelines that can perform something like: **raw FASTQ &rarr; Adaptor trimming and QC &rarr; Assembly &rarr; contig QC &rarr; Annotation &rarr; Phylogeny**. You might not always need to write your own, as there is a wealth of tools for bacterial and viral genomics available. But if you are working a non-model organism, or want to use tools built specifically for a specific organism, then you may have to write your own workflows.
 
 ![image](figures/Figure1.jpg)
+
+I like to think of scripts as often composed of three parts, a set-up, the main, and the closing. The set up for the script will include things such as defining argument flags, parameters, opening virtual environments (if needed), help function, setting up a log output. The main will compose of the primary purpose of the scripts, to run a specific or series of programmes, and the closing of the script will include anything got wrap it all up. 
 
 # Defining arguments
 
