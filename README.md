@@ -45,9 +45,19 @@ This tutorial will mostly dicuss the setup of a script, as that is where you can
 ![image](figures/Figure2.png)
 <small>**Figure 2.** Example script that downloads from NCBI the assembly data for bacterial genomes and accepts a list of bacterial genome accession IDs to download either the nucleotides or proteins. Highlighted is the part of the script that will be covered in this guide.</small>
 
+### Starting your script with a bang
+The the first line of a BASH script is called a *shebang*, and it specifies which interpreter/language will be used when executing the script. You might see a few different versions of this, and they can change the way your script operates.
+
+- <code>#!/usr/bin/env bash</code> : This is **generally the safest choice in an HPC environment** if your script requires bash-specific features. Using env  ensures the bash interpreter is found via the environment's PATH, which can be modified by the module system. Useful in HPC environments, where modules may alter the available shell or software versions.
+- <code>#!/bin/bash</code> : This assumes bash is located in /bin/bash, which is usually true for most Linux-based HPC systems. However, this can be less flexible if the HPC system has bash installed in non-standard locations or if you need different versions of bash.
+- <code>#!/bin/sh</code> : If your script doesn’t require any bash-specific features and you just need a simple, lightweight script for tasks like job submission, basic file handling, or running commands.
+- <code>#!/bin/sh -</code> : This is a more niche use case, and usually, you won’t need to run your HPC scripts in a login shell unless your environment setup is complex and isn't automatically inherited from your job scheduler.
+
 ### Printing a help message
 
-A help message is just a chunk of text, and unlike in R and Python is actually detached from the argument definement (covered below). However, I prefere to have the help message before argument defining, as it helps remind exactly what I need. For this you simply define a function called Help() and open up the function with curly brakets <code>{*INSERT FUNCTION HERE*}</code>. The help message iself it just generated using <code>echo</code>. Then the help message can be called simply by using the new command <code>Help</code>, in your script.
+A help message is just a chunk of text, and unlike in R and Python is actually detached from the argument definement (covered below). This means, that just because you write it in your help message, doesnt actually mean it is reflected in the defined arguments. Because of this, I prefere to have the help message written before writing the argument definition, as it helps remind me exactly what I need. For this you simply define a function called <code>Help()</code>, and open up the function with curly brakets <code>{</code>. The help message itself it just generated using <code>echo</code>. After the message is written, you close the function with another curly braket <code>}</code>. The help message can be called simply by using the new command <code>Help</code>, in your script.
+
+Possition wise this should be placed before the argument definement, as one flag will to call the help function (<code>-h</code>), it needs to be defined before.
 
 ```{sh}
 Help(){
@@ -59,6 +69,8 @@ Help(){
             -t      number of threads (default : 4)
             -h      print this help message and exit
 }
+
+Help # to print the help message
 ```
 
 ### Defining arguments
