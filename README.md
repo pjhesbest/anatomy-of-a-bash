@@ -99,13 +99,13 @@ assembly.sh -i sample-1_R1.fastq.gz -r sample-2_R1.fastq.gz -o sample-1_assembly
 First, we need to define the arguments for the script, and this is achieved using the <code>while getopts a\:b:c:h option; do</code>. Which looks scarier than it actually is. This is utilising a <code>while</code> statement to search for input flags, before here as <code>i\:o:t:h</code>, which just means it will search for <code>-i</code>, <code>-o</code>, <code>-t</code>, and <code>-h</code>. Next those flags are defined into variables, for example the input flag it is defined as such: <code>i)input=${OPTARG};;</code>.
 
 ```{sh}
-while getopts i:o:t:B:h option
+while getopts i:o:t:Q:h option
 do 
     case "${option}" in 
         i)input=${OPTARG};;
         o)output=${OPTARG};;
         t)threads=${OPTARG};;
-        B)bandage=false;;
+        Q)QCSPAdes=false;;
         h)Help; exit;;
     esac
 done
@@ -115,7 +115,7 @@ Now for the rest of the script, whenever you call the variable <code>${input}</c
 
 You can change this to have as many or as few arguments as you want. It is important to ensure that your help message (encoded in the function <code>Help</code> as described above), is as written to reflect the contents of the <code>while</code> argument. When the help message is called (e.g. <code>assembly.sh -h</code>), the script will terminate immediately after printing the help message, you acheive this by having the default bash function <code>exit</code> in <code>h)Help; exit;;</code>. 
 
-A final feature you can take advatage of is utilising a <code>true</code>/<code>false</code> statement in the argument definement (e.g <code>B)bandage=false;;</code>). Say for example you have an assembler - such SPAdes - that will produce a optional output that you sometimes want it to generate, like a bandage plot. You can add a flag <code>-B</code> when you want SPAdes to generate the bandage output, or omit it in order to resort to the default, which in the example is false (i.e. to not perform). If you do this, you will later have to include an <code>if</code> statement in order to enact this in both a <code>true</code> and <code>false</code> scenario (this will be covered later).
+A final feature you can take advatage of is utilising a <code>true</code>/<code>false</code> statement in the argument definement (e.g <code>Q)QCSPAdes=false;;</code>). For example, the assembler  SPAdes perform an optional read error correction by default, but if you perform error correction prior you may want to disable this with the SPAdes specific flag <code>--only-assembler</code>. In the example script the the flag <code>-Q</code> is added for when you want SPAdes to only perform the assembly, or omit the flag it in order to resort to the default setting, which in the example is false (i.e. perform/do not disable error correction). If you do this, you will later have to include an <code>if</code> statement in order to enact this in both a <code>true</code> and <code>false</code> scenario (this will be covered later).
 
 ### Producing error messages 
 
@@ -174,7 +174,6 @@ To define the output as the working directory you will need to use the function 
     echo -e "Output path is missing, defaulting to current directory: ${output}"
   ```
 
-
 </details>
 
 ### Generating logs-files
@@ -204,22 +203,6 @@ exec > >( tee -a "${logfile}" ) 2>&1
 ```
 
 With that you will generate a output containing the standard outputs and the standard errors, which is great for troubleshooting your code. If you are routinely sending scripts to a HPC, the submission manager of that HPC more than likely generates log files, so you might not actually need this unless you want to hoard log files. 
-
-```{sh}
-# Set up environment
-eval "$(conda shell.bash hook)"
-
-WD=${A}; cd ${WD}       # lets say in this example, the flag -a defines the path to the 
-                        #   working directory running the script
-
-# Define paths to databases, references, whatever you need! 
-# (Or these can all be made optional flags with default paths as an alternative way!)
-BARCODES=/path/to/illumina/barcodes.fasta
-KAIJU=/path/to/kaiju/database/
-
-################################################################################
-################################################################################
-```
 
 ### Environment setup
 
@@ -288,10 +271,7 @@ This alows you to change the text color as follows:
 echo -e "${red}ERROR: something has gone very wrong because the text is all red!${nocolor}"
 ```
 
-### The final script and more complex examples
-You can see an example of how this script broken down in the guide looks like all together at [bin/tb-profiler_v2.sh](URL). I have also added additional script to have a look through and get an idea of how else you can incorporate the features of bash to create increase the complexity/sofistication of the script.
-
-#### Adding a timestamp to the end of your script
+### Adding a timestamp to the end of your script
 If your optimising your scripts and trying to get an idea of run-time and computing resources its useful to print out the run time. This is easily done by first creating a timestamp at the  start and the end of your script, the  calculating the elapsed time, then printing the time.
 
 ```{sh}
@@ -324,6 +304,36 @@ If you are testing multing computing resource allocation and different processin
 echo -e "script1;${THREADS};${NBOOTSTRAPS};${NUMSEQUENCES};${hrs}:${min}:${sec}" >> computing-time-test.csv
 ```
 
+### <code>true</code>/<code>false</code> scenarios:
+
+Previously the idea of having a true/false argument for dissabling the error correction of SPAdes, as an example. If you have included an argument for when <code>QCSPADes == true</code> and when <code>QCSPADes == false</code>.
+
+Like before we start the if statement with a scenario, which is <code>QCSPADes == true</code> (for when the -Q flag is uses), then we direct a specific action for that scenario, which is to performs SPADes using the assembly only features disabling the error correction. 
+
+```{sh}
+
+if [[ QCSPADes == true ]]; then 
+  spades.py -1 sample-1_R1.fastq.gz -2 sample-1_R2.fastq.gz -o sample-1_assembly-out --only-assembler
+···
+```
+
+Then we can continue the if statement to include an alternative scenario using an 'else if' (elif) statement, for for scenario when <code>QCSPADes == false</code>, to perform spades with default features. This is also the default functioning of the example script as we defined <code>Q)QCSPADes=false;;</code> at the start of the script.
+
+```{sh}
+···
+elif [[ QCSPADes == false ]]; then
+  spades.py -1 sample-1_R1.fastq.gz -2 sample-1_R2.fastq.gz -o sample-1_assembly-out
+fi
+```
+The entire if argument will look as follows:
+
+```{sh}
+if [[ QCSPADes == true ]]; then 
+  spades.py -1 sample-1_R1.fastq.gz -2 sample-1_R2.fastq.gz -o sample-1_assembly-out --only-assembler
+elif [[ QCSPADes == false ]]; then
+  spades.py -1 sample-1_R1.fastq.gz -2 sample-1_R2.fastq.gz -o sample-1_assembly-out
+fi
+```
 #### Not running the script if the output of the tool already exists:
 In the example [bin/tb-profiler_v1.sh](URL) you can see that there is an example to search a collated output from previous runs of this scrip before deciing to run the script or not. It uses an <code>if</code> statement to determine wether that particular sampleID exists the output, and if it does not (i.e. ) to run the script. But if the output does exists (i.e. ), the it skips that particuler sample.
 
@@ -411,39 +421,19 @@ for file in ${DIRECTORY}/*R1.fastq.gz; do
 done
 ```
 
-***
-## Anatomy of a R script
+### Submitting modular scripts to HCP
 
-### Defining arguments
-Unlike this BASH, in R (and python), the help message can be created with defining arguments, making it more streamlined.
+Depending on your computing cluster server, you will be able to directly submit these scripts given that you provide sufficient information in your code to run with the necessary computing resources.
 
-```{r}
+**SunGrid system**
+For a SunGrid system you have to use <code>qsub</code> as your main command for submitting scripts. Because of how these scripts were writen, there are not cluster specific parameters defined within the script, so they can be defined with the script submission command
 
+```{sh}
+qsub 
 ```
 
-### Defining default variables
 
-```{r}
+### Example scripts
+Here are some examples of scripts, you can also find these scripts in in <code>bin/</code>. Take note how these scripts make use of all that has been discussed in this guide 
+![image](figures/Figure3.png)
 
-```
-
-***
-## Anatomy of a Python script
-
-### Defining arguments
-
-```{python}
-
-```
-
-### Defining default variables
-
-```{python}
-
-```
-
-### Generating logs-files
-
-```{python}
-
-```
