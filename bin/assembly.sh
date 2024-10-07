@@ -9,6 +9,7 @@ Help(){
         Optional:
             -o      path to output directory (default : current directory)
             -t      number of threads (default : 4)
+            -Q      Disable SPAdes read error correction and just perform assembly (default : false)
             -h      print this help message and exit
 "
 }
