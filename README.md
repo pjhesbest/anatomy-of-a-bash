@@ -9,23 +9,41 @@ CAUTION ITS VERY MESSY HERE
 ***
 
 ## Introduction
-For a long time my bioinformatic analyses were very slow, as all my scripts were build specifically for a partiuclar sample or groups of samples. This is likely a consequence of the way most bioinfomatics courses and tutorials are taught, which is to have a single sample going through a process at one time. Once the quanntity of data I was processing at any single timepoint began to scale up, I was over-relying on loops to go parse through all my samples at each step. 
-
-Paths were specific to a certain data/directories, defined variables were specific to the server I was using at the time, ect. This can all fall apart when you move institute and your scripts all feel messy or useless at your new job/serve/computer.
-
-This a completely acceptable way to opperate, but once you scale up and require routine analyses to be occuring is no longer stres-free or reliable way to operate.
-
-Bear in mind, that BASH is not always the best language for achieving this (python is a good alternative), but if all you know is a little BASH and havent had the time to learn Python, or another laguage, this guide is to help you start writing some simple and multi-sample functioning scripts. 
+For a long time my bioinformatic analyses were very laborious and slow. This was a result of my scripts being built specifically for a particular sample(s), possibly a consequence of the way most bioinfomatics courses/tutorials are taught, which is to have a single sample going through a process at one time, using a loops to parse through multiple samples. Once the quantity of data being procesed at any single timepoint scales up, you can end up over-relying on loops to go parse through all my samples at each step which can make then incredibly slow and limiting. Paths were specific to a certain data/directories, defined variables were specific to the server I was using at the time, ect. While this is not a unusual way to perform your genomic analysis and data processing, it can all fall apart when you move institute, share scripts/data, or try to make the scripts/data publically available. Just know that BASH is not always the best language for achieving this (python is a good alternative), but if all you know is a little BASH and havent had the time to learn Python, or another laguage, this guide is to help you start writing some multi-sample functioning scripts that can be submitted to server and help you generate lots of data in consistent manners that can be shared with colleagues, and immediately deposited into project repositories for reviwers and readers to utilise.
 
 ### Aims:
 
-The main aim of this guide is to show you way in which you can write BASH, R and Python scripts that: 
-1. Perform single/limited function(s) suitable for any appropriate data-type for that process
+The main aim of this guide is to show you ways to write BASH, R and Python scripts that: 
+1. Perform single/limited function(s) - suitable for any appropriate data-type for that function/programme (*modular scripts*)
 2. Using data located in any part of the computer/server
 3. Producing outputs in a default or specified location/name
 4. Has useful help messages
 5. Produces usefull error mesages
 6. Can be submited to any server type (e.g. SunCluter, SLURM).
+
+### Definitions
+A lot of these termsn/phrases should be familiar to you already if you have been running commands in a termina and submitting jobs to a high-performing computer. Some of these terms are my own descrption of things, they might not be universily recognised, but it is how I think of them (Table 1).
+
+<details>
+<summary>Table 1. Glossary of terms</summary>
+
+| **Term** | **Definition**  |
+|------|-------------|
+| **Functions** | A Bash function is a block of reusable code designed to perform a particular operation. Once defined, the function can be called multiple times within a script.  |
+| **HPC**  | High performing computers  |
+| **Loops: <code>for</code>** | A BASH <code>for</code> loop is a programming language statement which allows code to be repeatedly executed for a selection of data (i.e. <code>for file in read/*R1_fastq.gz; do</code> \| meaning for every R1 file in the reads directory, perform the following) |
+| **Loops: <code>until</code>**  | A BASH <code>until</code> loop is executes a code block repeatedly until a specific condition becomes true. |
+| **Loops: <code>while</code>**  | Perform an action <code>while</code> an expression is true, keep executing these lines of code. |
+| **Modular scripts**| Scripts that are not limited by location or data, and can be chained by a workflow manager  |
+| **Modules**  | The *module system* is a concept available on most supercomputers, simplifying the use of different software (versions) in a precise and controlled manner. |
+| **Pipeline**  | A pipeline is a series of processes, usually linear, which filter or transform data. The processes are generally assumed to be running concurrently. The first process takes raw data as input, does something to it, then sends its results to the second process, and so on, eventually ending with the final result being produced by the last process in the pipeline. Pipelines are normally quick, with a flow taking seconds to hours for end-to-end processing of a single set of data. |
+| **Statements: <code>elif</code>**  |  The <code>elif</code> statement, stands for “*else if*”. It can be used in conditional statements to check for multiple conditions. For example, if the first condition is false, it moves on to the next “elif” statement to check if that condition is true.  |
+| **Statements: <code>else</code>**  | An <code>else</code> statement pecifies that alternate processing is to take place when the conditions of the matching IF statement are not satisfied  |
+| **Statements: <code>if</code>**  | An <code>if</code> statement is a programming construct that allows you to make decisions based on certain conditions. It helps you control the flow of your program by executing different blocks of code depending on whether a given condition is true or false.  |
+| **Variable**| A BASH variable acts as temporary storage for a string or a number. Variables also make it easy for users to write complex functions and perform various operations. Users can create variables by giving them a name and a value. A name can be anything. (e.g. <code>${input}</code>) | 
+| **Workflow** | a set of processes, usually non-linear, often human rather than machine, which filter or transform data, often triggering external events. The processes are not assumed to be running concurrently. The data flow diagram of a pipeline can branch or loop. There may be no clearly defined "first" process -- data may enter the workflow from multiple sources. Any process may take raw data as input, do something to it, then send its results to another process |
+
+</details>
 
 ***
 ## Anatomy of a BASH script
@@ -298,10 +316,9 @@ echo -e ""Total time taken: ${hrs}:${min}:${sec}"
 
 ```
 
-If you are testing multing computing resource allocation and different processing time, you might even consider printing a running table of your experiment:
-
+If you are testing multiple computing resource allocation and different processing time, you might even consider printing a running table of your experiment along with your run parameters. For example, in the case of a a phylogeny script (<code>phylogeny</code>)
 ```{sh}
-echo -e "script1;${THREADS};${NBOOTSTRAPS};${NUMSEQUENCES};${hrs}:${min}:${sec}" >> computing-time-test.csv
+echo -e "phylogeny.sh;${THREADS};${NBOOTSTRAPS};${NUMSEQUENCES};${hrs}:${min}:${sec}" >> computing-time-test.csv
 ```
 
 ### <code>true</code>/<code>false</code> scenarios:
