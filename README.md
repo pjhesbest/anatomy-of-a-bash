@@ -454,6 +454,5 @@ qsub
 Here are some examples of scripts, you can also find these scripts in in <code>bin/</code>. Take note how these scripts make use of all that has been discussed in this guide 
 ![image](figures/Figure3.png)
 
-
 ![image](figures/Figure4.png)
 
