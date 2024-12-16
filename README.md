@@ -1,5 +1,5 @@
 # Anatomy of a BASH (WIP)
-Level: Advanced beginner-Intermediate | 2024-10-03
+Level: Advanced Beginner-Intermediate | 2024-10-03
 
 CAUTION ITS VERY MESSY HERE
 
